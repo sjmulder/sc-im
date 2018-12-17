@@ -89,8 +89,10 @@ endif
 
 # dynamic linking (should not be used in FreeBSD
 ifneq ($(shell uname -s),FreeBSD)
-  LDLIBS += -ldl
+  LDLIBS_DL ?= -ldl
 endif
+
+LDLIBS += $(LDLIBS_DL)
 
 ifneq (, $(shell which pkg-config))
   # Any system with pkg-config
@@ -98,16 +100,16 @@ ifneq (, $(shell which pkg-config))
   # NOTE: ncursesw (required)
   ifeq ($(shell uname -s),Darwin)
     # macOS' ncurses is built with wide-char support
-    LDFLAGS += -lncurses
+    LDLIBS_CURSES ?= -lncurses
   else ifneq ($(shell pkg-config --exists ncursesw || echo 'no'),no)
-    CFLAGS += $(shell pkg-config --cflags ncursesw)
-    LDLIBS += $(shell pkg-config --libs ncursesw)
+    CFLAGS_CURSES ?= $(shell pkg-config --cflags ncursesw)
+    LDLIBS_CURSES ?= $(shell pkg-config --libs ncursesw)
   else ifneq ($(shell pkg-config --exists ncurses || echo 'no'),no)
     # hopefully this includes wide character support then
-    CFLAGS += $(shell pkg-config --cflags ncurses)
-    LDLIBS += $(shell pkg-config --libs ncurses)
+    CFLAGS_CURSES ?= $(shell pkg-config --cflags ncurses)
+    LDLIBS_CURSES ?= $(shell pkg-config --libs ncurses)
   else
-    LDLIBS += -lncursesw
+    LDLIBS_CURSES ?= -lncursesw
   endif
 
   # NOTE: libxml and libzip are required for xlsx file import support
@@ -128,8 +130,11 @@ else ifeq ($(shell uname -s),Darwin)
   # macOS without pkg-config
 
   # macOS' ncurses is built with wide-char support
-  LDFLAGS += -lncurses
+  LDLIBS_CURSES += -lncurses
 endif
+
+CFLAGS += $(CFLAGS_CURSES)
+LDLIBS += $(LDLIBS_CURSES)
 
 OBJS = $(patsubst %.c, %.o, $(wildcard *.c) $(wildcard utils/*.c)) gram.o
 
